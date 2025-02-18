@@ -1,0 +1,61 @@
+#UMAP or any XYZ from excel as points 
+import bpy, csv 
+
+#current wishlist: make parents if group not encountered before and assign all subsequent group members to 
+#that new parent. This will let me change materioals uniformly
+
+#FUNCTIONS#########################################################################################
+
+###################################################################################################
+def hex_to_rgb( hex_value ): 
+    rgb = list(tuple(int(h[i:i+2], 16) for i in (0, 2, 4)))
+    r = rgb.pop(0) /255
+    g = rgb.pop(1) /255
+    b = rgb.pop()  /255 
+    #s = r1+g1+b1
+    #r = r1/s #normalize rgb to 0-1 range
+    #g = g1/s
+    #b = b1/s
+    return r, g, b
+     
+
+
+def add_material(obj, material_name, h):
+    material = bpy.data.materials.get(material_name)
+
+    if material is None:
+        material = bpy.data.materials.new(material_name)
+
+    material.use_nodes = True
+    principled_bsdf = material.node_tree.nodes.get('Principled BSDF')
+
+    if principled_bsdf is not None:
+        principled_bsdf.inputs[0].default_value = (*hex_to_rgb(h), 1) #RGBA  
+        principled_bsdf.inputs[4].default_value = (0) #metallic =1 dielectric=0 
+        principled_bsdf.inputs[7].default_value = (0) #roughness
+        principled_bsdf.inputs[17].default_value = (0,0,0,0) #emission  
+       
+
+    obj.active_material = material
+
+####################################################################################################
+
+
+path = "/Users/stn/Desktop/UMAPBlender/5K_byTissue_1034_test.csv" #opens hex color spreadsheet
+
+with open(path) as csvfile:
+    content = csv.reader(csvfile, delimiter=',', dialect='excel')
+    hexcolors = [] 
+    names =()
+    for i, row in enumerate(content) :
+        if i == 0: continue #skip header
+        id = row[0] 
+        x,y,z = row [1], row[2], row[3]
+        group = row [4]
+        h = row [5] 
+        bpy.ops.mesh.primitive_uv_sphere_add(radius = 0.05, location = (float(x), float(y) ,float(z)))
+        bpy.context.active_object.name = id
+        obj = bpy.context.object
+        newmaterialname = (str(h)+ "_G" + str(i)) 
+        print (newmaterialname)
+        add_material(obj, newmaterialname ,h) 
