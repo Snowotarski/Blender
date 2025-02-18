@@ -1,0 +1,5 @@
+import bpy
+
+for i in bpy.data.objects:
+    if i.dimensions.x < 0.0: 
+        i.select_set(True)
